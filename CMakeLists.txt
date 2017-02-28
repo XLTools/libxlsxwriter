@@ -88,6 +88,14 @@ file(GLOB LXW_SST_SOURCES test/unit/sst/test*.c)
 file(GLOB LXW_WORKBOOK_SOURCES test/unit/workbook/test*.c)
 file(GLOB LXW_APP_SOURCES test/unit/app/test*.c)
 file(GLOB LXW_CONTENTTYPES_SOURCES test/unit/content_types/test*.c)
+file(GLOB LXW_CORE_SOURCES test/unit/core/test*.c)
+file(GLOB LXW_RELATIONSHIPS_SOURCES test/unit/relationships/test*.c)
+file(GLOB LXW_FORMAT_SOURCES test/unit/format/test*.c)
+file(GLOB LXW_STYLES_SOURCES test/unit/styles/test*.c)
+file(GLOB LXW_DRAWING_SOURCES test/unit/drawing/test*.c)
+file(GLOB LXW_CHART_SOURCES test/unit/chart/test*.c)
+file(GLOB LXW_CUSTOM_SOURCES test/unit/custom/test*.c)
+file(GLOB LXW_FUNCTIONAL_SOURCES test/functional/src/*.c)
 
 set(LXW_UNIT_SOURCES
     test/unit/test_all.c
@@ -98,9 +106,17 @@ set(LXW_UNIT_SOURCES
     ${LXW_WORKBOOK_SOURCES}
     ${LXW_APP_SOURCES}
     ${LXW_CONTENTTYPES_SOURCES}
+    ${LXW_CORE_SOURCES}
+    ${LXW_RELATIONSHIPS_SOURCES}
+    ${LXW_FORMAT_SOURCES}
+    ${LXW_STYLES_SOURCES}
+    ${LXW_DRAWING_SOURCES}
+    ${LXW_CHART_SOURCES}
+    ${LXW_CUSTOM_SOURCES}
 )
 
 if (BUILD_TESTS)
+    # external libraries
     if(USE_SYSTEM_ZLIB)
         enable_language(CXX)
         set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
@@ -111,9 +127,30 @@ if (BUILD_TESTS)
         endif()
     endif()
 
+    # unit tests
     add_definitions(-DTESTING -DCOLOR_OK)
     CreateTest(LXW_UNIT_SOURCES unit)
+
+    # functional tests
+    # WARNING: currently doesn't work, since the Python tests expect
+    # in-source builds
+    find_program(PYTHON python)
+    foreach(source ${LXW_FUNCTIONAL_SOURCES})
+        get_filename_component(basename ${source} NAME_WE)
+        add_executable(${basename} ${source})
+        target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
+    endforeach(source)
 endif()
 
 # EXAMPLES
 # --------
+
+file(GLOB LXW_EXAMPLE_SOURCES examples/*.c)
+
+if(BUILD_EXAMPLES)
+    foreach(source ${LXW_EXAMPLE_SOURCES})
+        get_filename_component(basename ${source} NAME_WE)
+        add_executable(${basename} ${source})
+        target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
+    endforeach(source)
+endif()
