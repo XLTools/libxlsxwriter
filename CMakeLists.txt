@@ -130,9 +130,9 @@ if (BUILD_TESTS)
     else()
         if(NOT TARGET zlib)
             add_subdirectory(zlib)
-            include_directories("${CMAKE_CURRENT_SOURCE_DIR}/zlib")
-            set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
         endif()
+        include_directories("${CMAKE_CURRENT_SOURCE_DIR}/zlib")
+        set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
     endif()
 
     # unit tests
