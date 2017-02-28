@@ -20,7 +20,7 @@ string(REGEX REPLACE ".*LXW_VERSION \"[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" LXW_VE
 option(BUILD_STATIC "Build static libxlsxwriter" ON)
 option(BUILD_TESTS "Build libxlsxwriter tests" OFF)
 option(BUILD_EXAMPLES "Build libxlsxwriter examples" OFF)
-option(USE_STANDARD_TMPFILE "Use the C standard library's tmpfile()" ON)
+option(USE_STANDARD_TMPFILE "Use the C standard library's tmpfile()" OFF)
 option(USE_SYSTEM_ZLIB "Use system's Zlib library" ${UNIX})
 
 if(USE_STANDARD_TMPFILE)
@@ -47,7 +47,7 @@ add_definitions(-DNOCRYPT -DNOUNCRYPT)
 include_directories(include include/xlsxwriter)
 file(GLOB LXW_SOURCES src/*.c)
 list(APPEND LXW_SOURCES third_party/minizip/ioapi.c third_party/minizip/zip.c)
-if (USE_STANDARD_TMPFILE)
+if (NOT ${USE_STANDARD_TMPFILE})
     include_directories(third_party/tmpfileplus)
     list(APPEND LXW_SOURCES third_party/tmpfileplus/tmpfileplus.c)
 endif()
@@ -72,11 +72,16 @@ endif()
 #
 macro(CreateTest sources target)
     set(output_name libxlsxwriter_${target})
+    set(dependencies ${output_name})
+    if (NOT ${USE_SYSTEM_ZLIB})
+        list(APPEND dependencies zlib)
+    endif()
+
     add_executable(${output_name} ${${sources}})
     target_link_libraries(${output_name} libxlsxwriter ${ZLib_LIBRARIES})
     add_custom_target(check_${output_name}
         COMMAND $<TARGET_FILE:${output_name}>
-        DEPENDS ${output_name}
+        DEPENDS ${dependencies}
     )
 endmacro(CreateTest)
 
@@ -121,9 +126,12 @@ if (BUILD_TESTS)
         enable_language(CXX)
         set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
         find_package(ZLib REQUIRED "1.0")
+        include_directories(${ZLib_INCLUDE_DIRS})
     else()
         if(NOT TARGET ZLib)
             add_subdirectory(zlib)
+            include_directories("${CMAKE_CURRENT_SOURCE_DIR}/zlib")
+            set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
         endif()
     endif()
 
