@@ -12,7 +12,7 @@
 #
 #   Example:
 #       For example, in the build directory, to build libxlsxwriter
-#       and the unittests, type:
+#       and the unittests in debug mode, type:
 #           cmake .. -DBUILD_TESTS=ON
 #           make
 #           make check_xlsxwriter_unit
@@ -27,21 +27,27 @@
 #
 #       BUILD_STATIC
 #           Build static libraries (default on). To build shared
-#           libraries, pass (`-DBUILD_STATIC=OFF`) during configuration.
+#           libraries, pass `-DBUILD_STATIC=OFF` during configuration.
 #
 #       BUILD_TESTS
 #           Build unittests (default off). To build the unittests,
-#           pass (`-DBUILD_TESTS=ON`) during configuration.
+#           pass `-DBUILD_TESTS=ON` during configuration.
 #
 #       BUILD_EXAMPLES
 #           Build example files (default off). To build the examples,
-#           pass (`-DBUILD_EXAMPLES=ON`) during configuration.
+#           pass `-DBUILD_EXAMPLES=ON` during configuration.
 #
 #       USE_STANDARD_TMPFILE
 #           Use the standard tmpfile() function (default off). To enable
-#           the standard tmpfile, pass (`-DUSE_STANDARD_TMPFILE=ON`)
+#           the standard tmpfile, pass `-DUSE_STANDARD_TMPFILE=ON`
 #           during configuration. This may produce bugs while cross-
 #           compiling or using MinGW/MSYS.
+#
+#   CMake Options:
+#       CMake sets debug and release builds with the `CMAKE_BUILD_TYPE`
+#       option, which can be set as a flag during configuration.
+#       To build in release mode, pass `-DCMAKE_BUILD_TYPE=Release`
+#       during configuration.
 #
 #   Generators:
 #       CMake also supports custom build generators, such as MakeFiles,
