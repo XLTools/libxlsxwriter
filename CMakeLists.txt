@@ -1,6 +1,49 @@
 #  :copyright: (c) 2017 Alex Huszagh.
 #  :license: BSD, see LICENSE.txt for more details.
 
+# Description
+# ===========
+#
+#   Use:
+#       Move to a custom directory, ideally out of source, and
+#       type `cmake $LXW_SOURCE $FLAGS`, where `LXW_SOURCE` is the
+#       path to the libxlsxwriter project, and `FLAGS` are custom
+#       flags to pass to the compiler.
+#
+#   Example:
+#       For example, in the build directory, to build libxlsxwriter
+#       and the unittests, type:
+#           cmake .. -DBUILD_TESTS=ON
+#           make
+#           make check_xlsxwriter_unit
+#           make install
+#
+#   Flags:
+#       ZLIB_ROOT
+#           The ZLIB root directory can be specified either through
+#           an environment variable (`export ZLIB_ROOT=/usr/include`)
+#           or using a flag with CMake (`-DZLIB_ROOT:STRING=/usr/include`).
+#           This sets the preferred search path for the ZLIB installation.
+#
+#       BUILD_STATIC
+#           Build static libraries (default on). To build shared
+#           libraries, pass (`-DBUILD_STATIC=OFF`) during configuration.
+#
+#       BUILD_TESTS
+#           Build unittests (default off). To build the unittests,
+#           pass (`-DBUILD_TESTS=ON`) during configuration.
+#
+#       BUILD_EXAMPLES
+#           Build example files (default off). To build the examples,
+#           pass (`-DBUILD_EXAMPLES=ON`) during configuration.
+#
+#       USE_STANDARD_TMPFILE
+#           Use the standard tmpfile() function (default off). To enable
+#           the standard tmpfile, pass (`-DUSE_STANDARD_TMPFILE=ON`)
+#           during configuration. This may produce bugs while cross-
+#           compiling or using MinGW/MSYS.
+#
+
 cmake_minimum_required(VERSION 2.8)
 project(xlsxwriter C)
 
@@ -17,11 +60,18 @@ string(REGEX REPLACE ".*LXW_VERSION \"[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" LXW_VE
 # OPTIONS
 # -------
 
+SET(ZLIB_ROOT "" CACHE STRING "Optional root for the ZLIB installation")
+
 option(BUILD_STATIC "Build static libxlsxwriter" ON)
 option(BUILD_TESTS "Build libxlsxwriter tests" OFF)
 option(BUILD_EXAMPLES "Build libxlsxwriter examples" OFF)
 option(USE_STANDARD_TMPFILE "Use the C standard library's tmpfile()" OFF)
-option(USE_SYSTEM_ZLIB "Use system's Zlib library" ${UNIX})
+if(DEFINED ENV{${ZLIB_ROOT}})
+    set(ZLIB_ROOT $ENV{ZLIB_ROOT})
+endif()
+
+# CONFIGURATIONS
+# --------------
 
 if(USE_STANDARD_TMPFILE)
     add_definitions(-DUSE_STANDARD_TMPFILE)
@@ -37,6 +87,14 @@ if(BUILD_STATIC)
         set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} /MTd /O0")
         set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT /Ox")
     endif()
+endif()
+
+# ZLIB is required for the examples and tests, not the library
+if (${BUILD_TESTS} OR ${BUILD_EXAMPLES})
+    enable_language(CXX)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+    find_package(ZLIB REQUIRED "1.0")
+    include_directories(${ZLIB_INCLUDE_DIRS})
 endif()
 
 # LIBRARY
@@ -56,9 +114,9 @@ set(LXW_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(LXW_LIB_DIR "${LXW_PROJECT_DIR}/lib")
 
 if(BUILD_STATIC)
-    add_library(libxlsxwriter STATIC ${LXW_SOURCES})
+    add_library(xlsxwriter STATIC ${LXW_SOURCES})
 else()
-    add_library(libxlsxwriter SHARED ${LXW_SOURCES})
+    add_library(xlsxwriter SHARED ${LXW_SOURCES})
 endif()
 
 # TESTS
@@ -71,14 +129,11 @@ endif()
 #   target        Test name
 #
 macro(CreateTest sources target)
-    set(output_name libxlsxwriter_${target})
+    set(output_name xlsxwriter_${target})
     set(dependencies ${output_name})
-    if (NOT ${USE_SYSTEM_ZLIB})
-        list(APPEND dependencies zlib)
-    endif()
 
     add_executable(${output_name} ${${sources}})
-    target_link_libraries(${output_name} libxlsxwriter ${ZLib_LIBRARIES})
+    target_link_libraries(${output_name} xlsxwriter ${ZLIB_LIBRARIES})
     add_custom_target(check_${output_name}
         COMMAND $<TARGET_FILE:${output_name}>
         DEPENDS ${dependencies}
@@ -121,20 +176,6 @@ set(LXW_UNIT_SOURCES
 )
 
 if (BUILD_TESTS)
-    # external libraries
-    if(USE_SYSTEM_ZLIB)
-        enable_language(CXX)
-        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-        find_package(ZLib REQUIRED "1.0")
-        include_directories(${ZLib_INCLUDE_DIRS})
-    else()
-        if(NOT TARGET zlib)
-            add_subdirectory(zlib)
-        endif()
-        include_directories("${CMAKE_CURRENT_SOURCE_DIR}/zlib")
-        set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
-    endif()
-
     # unit tests
     add_definitions(-DTESTING -DCOLOR_OK)
     CreateTest(LXW_UNIT_SOURCES unit)
@@ -142,12 +183,12 @@ if (BUILD_TESTS)
     # functional tests
     # WARNING: currently doesn't work, since the Python tests expect
     # in-source builds
-    find_program(PYTHON python)
-    foreach(source ${LXW_FUNCTIONAL_SOURCES})
-        get_filename_component(basename ${source} NAME_WE)
-        add_executable(${basename} ${source})
-        target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
-    endforeach(source)
+    #find_program(PYTHON python)
+    #foreach(source ${LXW_FUNCTIONAL_SOURCES})
+    #    get_filename_component(basename ${source} NAME_WE)
+    #    add_executable(${basename} ${source})
+    #    target_link_libraries(${basename} xlsxwriter ${ZLIB_LIBRARIES})
+    #endforeach(source)
 endif()
 
 # EXAMPLES
@@ -159,6 +200,14 @@ if(BUILD_EXAMPLES)
     foreach(source ${LXW_EXAMPLE_SOURCES})
         get_filename_component(basename ${source} NAME_WE)
         add_executable(${basename} ${source})
-        target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
+        target_link_libraries(${basename} xlsxwriter ${ZLIB_LIBRARIES})
     endforeach(source)
 endif()
+
+# INSTALL
+# -------
+
+install(TARGETS xlsxwriter
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
