@@ -226,3 +226,8 @@ install(TARGETS xlsxwriter
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
+install(FILES include/xlsxwriter.h DESTINATION include)
+install(DIRECTORY include/xlsxwriter
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h"
+)
