@@ -43,6 +43,15 @@
 #           during configuration. This may produce bugs while cross-
 #           compiling or using MinGW/MSYS.
 #
+#   Generators:
+#       CMake also supports custom build generators, such as MakeFiles,
+#       Ninja, Visual Studio, and XCode. For example, to generate
+#       a Visual Studio solution, configure with:
+#           cmake .. -G "Visual Studio 14 2015 Win64"
+#
+#       For more information on using generators, see:
+#           https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html
+#
 
 cmake_minimum_required(VERSION 2.8)
 project(xlsxwriter C)
