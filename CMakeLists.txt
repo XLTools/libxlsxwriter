@@ -142,12 +142,12 @@ if (BUILD_TESTS)
     # functional tests
     # WARNING: currently doesn't work, since the Python tests expect
     # in-source builds
-    find_program(PYTHON python)
-    foreach(source ${LXW_FUNCTIONAL_SOURCES})
-        get_filename_component(basename ${source} NAME_WE)
-        add_executable(${basename} ${source})
-        target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
-    endforeach(source)
+    #find_program(PYTHON python)
+    #foreach(source ${LXW_FUNCTIONAL_SOURCES})
+    #    get_filename_component(basename ${source} NAME_WE)
+    #    add_executable(${basename} ${source})
+    #    target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
+    #endforeach(source)
 endif()
 
 # EXAMPLES
