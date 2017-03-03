@@ -1,6 +1,5 @@
-#  :copyright: (c) Kitware.
 #  :copyright: (c) 2017 Alex Huszagh.
-#  :license: 3-clause BSD, see https://cmake.org/licensing for details.
+#  :license: FreeBSD, see LICENSE.txt for more details.
 
 # FindZLIB
 # --------

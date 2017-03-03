@@ -1,5 +1,5 @@
 #  :copyright: (c) 2017 Alex Huszagh.
-#  :license: BSD, see LICENSE.txt for more details.
+#  :license: FreeBSD, see LICENSE.txt for more details.
 
 # Description
 # ===========
