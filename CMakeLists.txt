@@ -159,7 +159,7 @@ macro(CreateTest sources target)
     set(dependencies ${output_name})
 
     add_executable(${output_name} ${${sources}})
-    target_link_libraries(${output_name} xlsxwriter ${ZLIB_LIBRARIES})
+    target_link_libraries(${output_name} xlsxwriter ${ZLib_LIBRARIES})
     add_custom_target(check_${output_name}
         COMMAND $<TARGET_FILE:${output_name}>
         DEPENDS ${dependencies}
@@ -226,7 +226,7 @@ if(BUILD_EXAMPLES)
     foreach(source ${LXW_EXAMPLE_SOURCES})
         get_filename_component(basename ${source} NAME_WE)
         add_executable(${basename} ${source})
-        target_link_libraries(${basename} xlsxwriter ${ZLIB_LIBRARIES})
+        target_link_libraries(${basename} xlsxwriter ${ZLib_LIBRARIES})
     endforeach(source)
 endif()
 
