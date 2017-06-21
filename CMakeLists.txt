@@ -13,6 +13,7 @@
 #   Example:
 #       For example, in the build directory, to build libxlsxwriter
 #       and the unittests in debug mode, type:
+#           cd cmake
 #           cmake .. -DBUILD_TESTS=ON
 #           make
 #           make check_xlsxwriter_unit
@@ -60,17 +61,10 @@
 #
 
 cmake_minimum_required(VERSION 2.8)
-project(xlsxwriter C)
 
-# VERSION
-# -------
+SET(PROJECT_NAME "xlsxwriter" CACHE STRING "Optional project and binary name")
 
-set(LXW_VERSION include/xlsxwriter.h)
-file(STRINGS "${LXW_VERSION}" LXW_VERSION_CONTENTS REGEX "#define LXW_VERSION \"[0-9]+\\.[0-9]+\\.[0-9]+\"")
-
-string(REGEX REPLACE ".*LXW_VERSION \"([0-9]+).*" "\\1" LXW_VERSION_MAJOR "${LXW_VERSION_CONTENTS}")
-string(REGEX REPLACE ".*LXW_VERSION \"[0-9]+\\.([0-9]+).*" "\\1" LXW_VERSION_MINOR "${LXW_VERSION_CONTENTS}")
-string(REGEX REPLACE ".*LXW_VERSION \"[0-9]+\\.[0-9]+\\.([0-9]+).*" "\\1" LXW_VERSION_PATCH "${LXW_VERSION_CONTENTS}")
+project(${PROJECT_NAME} C)
 
 # OPTIONS
 # -------
@@ -95,33 +89,22 @@ endif()
 if(BUILD_STATIC)
     if(UNIX)
         set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-    elseif(MINGW OR MSYS)
+    elseif(${MINGW} OR ${MSYS})
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static -static-libgcc -Wno-char-subscripts -Wno-long-long")
         add_definitions(-DUSE_FILE32API)
     elseif(MSVC)
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_RELEASE} /MTd /O0")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT /Ox")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd /O0 /Fd${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pdb")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT /Ox /Zi /Fd${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pdb")
+        set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MT /Zi /Fd${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pdb")
+        set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MT /Fd${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pdb")
     endif()
 endif()
 
-# ZLIB is required for the examples and tests, not the library
-if (${BUILD_TESTS} OR ${BUILD_EXAMPLES})
-    enable_language(CXX)
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
-    if(USE_SYSTEM_ZLIB)
-        enable_language(CXX)
-        set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-        find_package(ZLib REQUIRED "1.0")
-        include_directories(${ZLib_INCLUDE_DIRS})
-    else()
-        if(NOT TARGET zlib)
-            add_subdirectory(zlib)
-        endif()
-        include_directories("${CMAKE_CURRENT_SOURCE_DIR}/zlib")
-        set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
-    endif()
-endif()
+enable_language(CXX)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(ZLIB REQUIRED "1.0")
+include_directories(${ZLIB_INCLUDE_DIRS})
+message("zlib version: " ${ZLIB_VERSION})
 
 # LIBRARY
 # -------
@@ -140,9 +123,17 @@ set(LXW_PROJECT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(LXW_LIB_DIR "${LXW_PROJECT_DIR}/lib")
 
 if(BUILD_STATIC)
-    add_library(xlsxwriter STATIC ${LXW_SOURCES})
+    add_library(${PROJECT_NAME} STATIC ${LXW_SOURCES})
 else()
-    add_library(xlsxwriter SHARED ${LXW_SOURCES})
+    add_library(${PROJECT_NAME} SHARED ${LXW_SOURCES})
+endif()
+
+if(MSVC)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rename
+        ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.pdb
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb
+    )
 endif()
 
 # TESTS
@@ -159,7 +150,7 @@ macro(CreateTest sources target)
     set(dependencies ${output_name})
 
     add_executable(${output_name} ${${sources}})
-    target_link_libraries(${output_name} xlsxwriter ${ZLib_LIBRARIES})
+    target_link_libraries(${output_name} ${PROJECT_NAME} ${ZLIB_LIBRARIES})
     add_custom_target(check_${output_name}
         COMMAND $<TARGET_FILE:${output_name}>
         DEPENDS ${dependencies}
@@ -213,7 +204,7 @@ if (BUILD_TESTS)
     #foreach(source ${LXW_FUNCTIONAL_SOURCES})
     #    get_filename_component(basename ${source} NAME_WE)
     #    add_executable(${basename} ${source})
-    #    target_link_libraries(${basename} libxlsxwriter ${ZLib_LIBRARIES})
+    #    target_link_libraries(${basename} xlsxwriter ${ZLIB_LIBRARIES})
     #endforeach(source)
 endif()
 
@@ -226,17 +217,37 @@ if(BUILD_EXAMPLES)
     foreach(source ${LXW_EXAMPLE_SOURCES})
         get_filename_component(basename ${source} NAME_WE)
         add_executable(${basename} ${source})
-        target_link_libraries(${basename} xlsxwriter ${ZLib_LIBRARIES})
+        target_link_libraries(${basename} ${PROJECT_NAME} ${ZLIB_LIBRARIES})
     endforeach(source)
 endif()
 
 # INSTALL
 # -------
 
-install(TARGETS xlsxwriter
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
+if(MSVC)
+    if(CMAKE_CL_64)
+        install(TARGETS ${PROJECT_NAME}
+            LIBRARY DESTINATION "lib/x64/\${CMAKE_INSTALL_CONFIG_NAME}"
+            ARCHIVE DESTINATION "lib/x64/\${CMAKE_INSTALL_CONFIG_NAME}"
+        )
+        install(FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb
+            DESTINATION "lib/x64/\${CMAKE_INSTALL_CONFIG_NAME}"
+        )
+    else()
+        install(TARGETS ${PROJECT_NAME}
+            LIBRARY DESTINATION "lib/Win32/\${CMAKE_INSTALL_CONFIG_NAME}"
+            ARCHIVE DESTINATION "lib/Win32/\${CMAKE_INSTALL_CONFIG_NAME}"
+        )
+        install(FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/${PROJECT_NAME}.pdb
+            DESTINATION "lib/Win32/\${CMAKE_INSTALL_CONFIG_NAME}"
+        )
+    endif()
+else(MSVC)
+    install(TARGETS ${PROJECT_NAME}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+    )
+endif(MSVC)
 install(FILES include/xlsxwriter.h DESTINATION include)
 install(DIRECTORY include/xlsxwriter
     DESTINATION include
