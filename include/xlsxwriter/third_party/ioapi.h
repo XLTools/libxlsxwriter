@@ -73,18 +73,6 @@
 #endif
 #endif
 
-#ifdef __MINGW32__
-  #ifndef fopen64
-    #define fopen64 fopen
-  #endif
-  #ifndef ftello64
-    #define ftello64 ftello
-  #endif
-  #ifndef fseeko64
-    #define fseeko64 fseeko
-  #endif
-#endif
-
 /*
 #ifndef ZPOS64_T
   #ifdef _WIN32
