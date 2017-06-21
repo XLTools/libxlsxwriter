@@ -76,6 +76,7 @@
 #define ftello64 ftello
 #define fseeko64 fseeko
 #endif
+#endif
 
 /*
 #ifndef ZPOS64_T
