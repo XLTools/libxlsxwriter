@@ -67,10 +67,16 @@
 #endif
 #endif
 
-#if defined(__MINGW32__) && defined(__NO_MINGW_LFS)
-#define fopen64 fopen
-#define ftello64 ftello
-#define fseeko64 fseeko
+#ifdef (__MINGW32__)
+  #ifndef fopen64
+    #define fopen64 fopen
+  #endif
+  #ifndef ftello64
+    #define ftello64 ftello
+  #endif
+  #ifndef fseeko64
+    #define fseeko64 fseeko
+  #endif
 #endif
 
 /*
