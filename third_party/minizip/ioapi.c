@@ -14,7 +14,7 @@
         #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#if defined(__MINGW32__) && defined(__NO_MINGW_LFS)
+#if defined(__MINGW32__) && !(defined __MINGW64__)
 #define IOAPI_NO_64
 #endif
 
