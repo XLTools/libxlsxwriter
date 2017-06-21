@@ -60,11 +60,11 @@
 #           https://cmake.org/cmake/help/v3.0/manual/cmake-generators.7.html
 #
 
+set(CMAKE_LEGACY_CYGWIN_WIN32 1)
 cmake_minimum_required(VERSION 2.8)
-
 SET(PROJECT_NAME "xlsxwriter" CACHE STRING "Optional project and binary name")
-
 project(${PROJECT_NAME} C)
+enable_testing()
 
 # OPTIONS
 # -------
@@ -102,7 +102,15 @@ endif()
 
 enable_language(CXX)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-find_package(ZLIB REQUIRED "1.0")
+find_package(ZLIB "1.0")
+if (NOT ZLIB_FOUND)
+    if(NOT TARGET zlib)
+        add_subdirectory(zlib)
+    endif()
+    set(ZLIB_INCLUDE_DIRS zlib)
+    set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
+endif()
+
 include_directories(${ZLIB_INCLUDE_DIRS})
 message("zlib version: " ${ZLIB_VERSION})
 
@@ -151,9 +159,10 @@ macro(CreateTest sources target)
 
     add_executable(${output_name} ${${sources}})
     target_link_libraries(${output_name} ${PROJECT_NAME} ${ZLIB_LIBRARIES})
-    add_custom_target(check_${output_name}
-        COMMAND $<TARGET_FILE:${output_name}>
-        DEPENDS ${dependencies}
+
+    add_test(NAME ${output_name}
+        COMMAND ${output_name}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endmacro(CreateTest)
 
