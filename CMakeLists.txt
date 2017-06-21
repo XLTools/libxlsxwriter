@@ -109,7 +109,7 @@ if (NOT ZLIB_FOUND)
     endif()
     set(ZLIB_INCLUDE_DIRS zlib)
     set(ZLIB_LIBRARY $<TARGET_FILE:zlib>)
-    set(ZLIB_LIBRARIES ${ZLib_LIBRARY})
+    set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
     set(ZLIB_FOUND 1)
 endif()
 
