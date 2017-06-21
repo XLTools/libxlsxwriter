@@ -75,8 +75,13 @@ option(BUILD_STATIC "Build static libxlsxwriter" ON)
 option(BUILD_TESTS "Build libxlsxwriter tests" OFF)
 option(BUILD_EXAMPLES "Build libxlsxwriter examples" OFF)
 option(USE_STANDARD_TMPFILE "Use the C standard library's tmpfile()" OFF)
+option(IOAPI_NO_64 "Disable 64-bit filesystem support" OFF)
 if(DEFINED ENV{${ZLIB_ROOT}})
     set(ZLIB_ROOT $ENV{ZLIB_ROOT})
+endif()
+
+if(IOAPI_NO_64)
+    add_definitions(-DIOAPI_NO_64=1)
 endif()
 
 # CONFIGURATIONS
