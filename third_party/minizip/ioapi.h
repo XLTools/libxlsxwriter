@@ -65,11 +65,12 @@
   #define fseeko64 fseek
  #endif
 #endif
+#endif
+
 #if defined(__MINGW32__) && defined(__NO_MINGW_LFS)
 #define fopen64 fopen
 #define ftello64 ftello
 #define fseeko64 fseeko
-#endif
 #endif
 
 /*
