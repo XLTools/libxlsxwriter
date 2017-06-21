@@ -73,7 +73,7 @@
 #endif
 #endif
 
-#ifdef (__MINGW32__)
+#ifdef __MINGW32__
   #ifndef fopen64
     #define fopen64 fopen
   #endif
