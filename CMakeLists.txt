@@ -109,6 +109,7 @@ if (NOT ZLIB_FOUND)
     endif()
     set(ZLIB_INCLUDE_DIRS zlib)
     set(ZLib_LIBRARIES $<TARGET_FILE:zlib>)
+    set(ZLIB_FOUND 1)
 endif()
 
 include_directories(${ZLIB_INCLUDE_DIRS})
